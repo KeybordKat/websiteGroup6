@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Entity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">core</a> &gt; <a href="index.source.html" class="el_package">io.github.eng1group9.entities</a> &gt; <span class="el_source">Entity.java</span></div><h1>Entity.java</h1><pre class="source lang-java linenums">package io.github.eng1group9.entities;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+
+/**
+* An Entity is the parent class for any game object with a position and collision.
+*
+* @param texture The texture the entity will use.
+* @param startPosition Where the entity will begin in game as Vector2.
+* @param width The width of the entity.
+* @param height The height of the entity.
+*
+*
+* @author Mat.
+*
+*/
+public class Entity {
+
+    //Private Texture missingTexture = new Texture(&quot;missingTexture.png&quot;); // Used if no texture is available for the entity.
+<span class="fc" id="L22">    private Sprite sprite = new Sprite();</span>
+<span class="fc" id="L23">    private Rectangle hitbox = new Rectangle();</span>
+<span class="fc" id="L24">    private boolean canCollide = true; // whether the entity will collide with other entities / rectangles.</span>
+<span class="fc" id="L25">    public float scale = 1;</span>
+    private float width;
+    private float height;
+
+// Not used currently. Removed to make unit test possible.
+//    public Entity(Texture texture, Vector2 startPosition, float width, float height) {
+//        sprite.setTexture(texture);
+//        this.width = width;
+//        this.height = height;
+//        sprite.setSize(width, height);
+//        sprite.setPosition(startPosition.x , startPosition.y);
+//        hitbox.set(startPosition.x + width, startPosition.y + height, width,    16);
+//    }
+
+
+<span class="fc" id="L40">    public Entity(Vector2 startPosition, float width, float height) {</span>
+<span class="fc" id="L41">        sprite.setSize(width, height);</span>
+<span class="fc" id="L42">        sprite.setPosition(startPosition.x, startPosition.y);</span>
+<span class="fc" id="L43">        hitbox.set(startPosition.x  + 16, startPosition.y  + 16, width, 16);</span>
+<span class="fc" id="L44">    }</span>
+
+    /**
+     * Change the position of the entity using a Vector2D.
+     * @param newPosition - A vector defining the new position.
+     */
+    public void setPosition(Vector2 newPosition) {
+<span class="fc" id="L51">        sprite.setPosition(newPosition.x, newPosition.y);</span>
+<span class="fc" id="L52">        hitbox.setPosition(newPosition.x  + 16, newPosition.y + 16);</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Change the position of the entity using a two float values.
+     * @param x - The entity's new x co-ordinate.
+     * @param y - The entity's new y co-ordinate.
+     */
+    public void setPosition(float x, float y) {
+<span class="fc" id="L61">        sprite.setPosition(x, y);</span>
+<span class="fc" id="L62">        hitbox.setPosition(x, y);</span>
+<span class="fc" id="L63">    }</span>
+
+    /**
+     * @return The current position of the entity as a Vector2D.
+     */
+//    //unused
+//    public Vector2 getPosition() {
+//        return new Vector2(sprite.getX(), sprite.getY());
+//    }
+//
+//    /**
+//     * Set the x co-ordinate of the entity.
+//     * @param x - The new x co-ordinate.
+//     */
+//    //unused
+//    public void setX(float x) {
+//        sprite.setX(x);
+//        hitbox.setX(x + (0.5f * width));
+//    }
+//
+//    /**
+//     * Set the y co-ordinate of the entity.
+//     * @param y - The new x co-ordinate.
+//     */
+//    //unused
+//    public void setY(float y) {
+//        sprite.setY(y);
+//        hitbox.setY(y + (0.5f * height));
+//    }
+
+    /**
+    * @return the entity's x co-ordinate.
+    */
+    public float getX() {
+<span class="fc" id="L97">        return sprite.getX();</span>
+    }
+
+    /**
+    * @return the entity's y co-ordinate.
+    */
+    public float getY() {
+<span class="fc" id="L104">        return sprite.getY();</span>
+    }
+
+    /**
+     * Render the entity.
+     * @param batch - The SpriteBatch this entity should be rendered with.
+     */
+    public void draw(SpriteBatch batch) {
+<span class="nc" id="L112">        sprite.draw(batch);</span>
+<span class="nc" id="L113">    }</span>
+
+    /**
+    * @return the Rectangle used as the entity's hitbox.
+    */
+    public Rectangle getHitbox() {
+<span class="fc" id="L119">        return hitbox;</span>
+    }
+
+    /**
+    * Toggle whether other entities can detect collision with this entity.
+    */
+//    //unused
+//    public void toggleCollision() {
+//        canCollide = !canCollide;
+//    }
+
+    /**
+    * @return whether this entity has collision enabled.
+    */
+    public boolean hasCollision() {
+<span class="fc" id="L134">        return canCollide;</span>
+    }
+
+    //unused, add jdoc if kept
+//    public float distanceTo(Entity other) {
+//        float dx = this.getX() - other.getX();
+//        float dy = this.getY() - other.getY();
+//        return (float)Math.sqrt((dx * dx) + (dy * dy));
+//    }
+
+    /**
+    * @return wether this entity collides with a rectangle.
+    */
+    public boolean isColliding(Rectangle rect)  {
+<span class="pc bpc" id="L148" title="1 of 4 branches missed.">        return rect.overlaps(hitbox) &amp;&amp; canCollide;</span>
+    }
+
+
+    /**
+     * @return the Texture used by this entity.
+     */
+//    public Texture getTexture() {
+//        return sprite.getTexture();
+//    }
+//
+//    public void setTexture(Texture newTexture) {
+//        sprite.setTexture(newTexture);
+//    }
+
+    /**
+     * @return the width of this entity (after scaling).
+     */
+    public float getWidth() {
+<span class="fc" id="L167">        return sprite.getWidth() * scale;</span>
+    }
+
+    /**
+     * @return the height of this entity (after scaling).
+     */
+    public float getHeight() {
+<span class="fc" id="L174">        return sprite.getWidth() * scale;</span>
+    }
+
+    /**
+     * Sets the scale used to stretch the entity when drawn (in x and y).
+     * @param newScale
+    */
+    public void setScale(float newScale) {
+<span class="fc" id="L182">        scale = newScale;</span>
+<span class="fc" id="L183">    }</span>
+
+    /**
+     * Update the hitbox of an entity.
+     * @param hitbox - The entity's new hitbox.
+     */
+    public void setHitbox(Rectangle hitbox) {
+<span class="fc" id="L190">        this.hitbox = hitbox;</span>
+<span class="fc" id="L191">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

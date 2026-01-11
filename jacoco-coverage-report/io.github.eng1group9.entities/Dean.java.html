@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Dean.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">core</a> &gt; <a href="index.source.html" class="el_package">io.github.eng1group9.entities</a> &gt; <span class="el_source">Dean.java</span></div><h1>Dean.java</h1><pre class="source lang-java linenums">package io.github.eng1group9.entities;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+
+/**
+ * This is the Dean, the games negative event and antagonist.
+ * They will not collide with the walls, but will catch the player if they get too close.
+ * @param startPos - Where the dean will start.
+ * @param speed - How fast the dean will move.
+ * @param path - The deans path, it will follow this on loop.
+ */
+public class Dean extends MovingEntity {
+<span class="fc" id="L15">    private int reach = 3; // size of dean hitbox in tiles (3x3)</span>
+<span class="fc" id="L16">    private int moveNum = 0;</span>
+<span class="fc" id="L17">    private float nextTileDistance = 32;</span>
+    private Character[] path;
+    private Rectangle reachRectangle;
+    final Vector2 STARTPOS;
+<span class="fc" id="L21">    private int pathDirection = 1; // normal direction</span>
+    private float lastX;
+    private float lastY;
+    private int stuckFrames;
+<span class="fc" id="L25">    private boolean reversing = false;</span>
+<span class="fc" id="L26">    private boolean reverseNext = false;</span>
+<span class="fc" id="L27">    private int counter = 0;</span>
+
+    public Dean(Vector2 startPos, float speed, Character[] path) {
+<span class="fc" id="L30">        super(new Texture(&quot;Characters/deanAnimations.png&quot;), new int[] {4, 4,4,4} , 32, 32, speed);</span>
+<span class="fc" id="L31">        setScale(2);</span>
+<span class="fc" id="L32">        setPosition(startPos);</span>
+<span class="fc" id="L33">        setHitbox(new Rectangle());</span>
+
+<span class="fc" id="L35">        reachRectangle = new Rectangle();</span>
+<span class="fc" id="L36">        reachRectangle.setPosition(startPos.x -32, startPos.y -42);</span>
+<span class="fc" id="L37">        reachRectangle.setSize(reach * 32);</span>
+<span class="fc" id="L38">        setHitbox(new Rectangle());</span>
+<span class="fc" id="L39">        this.path = path;</span>
+<span class="fc" id="L40">        STARTPOS = startPos;</span>
+<span class="fc" id="L41">    }</span>
+
+    /**
+     * Move the dean along its set path.
+     * It will move in a given direction until it has moved one tile, then look at the next direction.
+     */
+    public void nextMove() {
+<span class="nc" id="L48">        float remaining = getSpeed() * Gdx.graphics.getDeltaTime();</span>
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        while (remaining &gt; 0f) {</span>
+<span class="nc" id="L51">            Character direction = getNextDirection();</span>
+<span class="nc" id="L52">            float step = Math.min(remaining, nextTileDistance);</span>
+<span class="nc" id="L53">            float distance = move(direction, step);</span>
+
+
+            // checks if any meaningful distance has been moved
+<span class="nc bnc" id="L57" title="All 2 branches missed.">            if (distance &lt;= 0.0001f) {</span>
+<span class="nc" id="L58">                stuckFrames += 1;</span>
+
+<span class="nc bnc" id="L60" title="All 2 branches missed.">                if (stuckFrames &gt;= 120) { // technically a different amount of time for each machine, but still comfortably covers the use case</span>
+<span class="nc" id="L61">                    syncPos(getNextDirection());</span>
+<span class="nc" id="L62">                    stuckFrames = 0;</span>
+                }
+                break;
+            }
+
+<span class="nc" id="L67">            stuckFrames = 0;</span>
+
+<span class="nc" id="L69">            remaining -= distance;</span>
+<span class="nc" id="L70">            nextTileDistance -= distance;</span>
+
+<span class="nc bnc" id="L72" title="All 2 branches missed.">            if (!isFrozen()) updateAnimation(direction);</span>
+<span class="nc" id="L73">            reachRectangle.setPosition(getX() - 32, getY() - 32);</span>
+
+            // handles the dean changing direction
+<span class="nc bnc" id="L76" title="All 2 branches missed.">            if (nextTileDistance &lt;= 0f) {</span>
+<span class="nc" id="L77">                nextTileDistance = 32;</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">                if (!reversing) moveNum++;</span>
+<span class="nc" id="L79">                else moveNum--;</span>
+
+<span class="nc bnc" id="L81" title="All 2 branches missed.">                if (reverseNext) {</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">                    reversing = !reversing;</span>
+<span class="nc" id="L83">                    reverseNext = false;</span>
+<span class="nc" id="L84">                    nextTileDistance = 32f;</span>
+                }
+                break;
+            }
+<span class="nc" id="L88">        }</span>
+
+<span class="nc" id="L90">        lastX = getX();</span>
+<span class="nc" id="L91">        lastY = getY();</span>
+<span class="nc" id="L92">    }</span>
+
+    /**
+     * @return The direction the dean should move in next.
+     */
+    private Character getNextDirection() {
+<span class="nc" id="L98">        int n = path.length;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (n == 0) return 'U';</span>
+
+
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if (moveNum &gt;= n) moveNum %= n;</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        if (moveNum &lt; 0)  moveNum = (moveNum % n + n) % n;</span>
+
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (!reversing) {</span>
+<span class="nc" id="L106">            return path[moveNum];</span>
+        } else {
+<span class="nc" id="L108">            int prev = moveNum - 1;</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">            if (prev &lt; 0) prev += n;</span>
+<span class="nc" id="L110">            return invertChar(path[prev]);</span>
+        }
+    }
+
+    public void changeDirection() {
+<span class="fc" id="L115">        reverseNext = true;</span>
+<span class="fc" id="L116">    }</span>
+
+    /**
+     * Update the dean's animation based on its current direction.
+     * @param direction - The direction the dean is moving.
+     */
+    private void updateAnimation(Character direction) {
+<span class="nc bnc" id="L123" title="All 5 branches missed.">        switch (direction) {</span>
+                case 'U':
+<span class="nc" id="L125">                    changeAnimation(1);</span>
+<span class="nc" id="L126">                    break;</span>
+                case 'L':
+<span class="nc" id="L128">                    changeAnimation(3);</span>
+<span class="nc" id="L129">                    break;</span>
+                case 'D':
+<span class="nc" id="L131">                    changeAnimation(0);</span>
+<span class="nc" id="L132">                    break;</span>
+                case 'R':
+<span class="nc" id="L134">                    changeAnimation(2);</span>
+                    break;
+            }
+<span class="nc" id="L137">    }</span>
+
+    /**
+     * Check if a player is within the dean's reach.
+     * Will be false if the given player is invisible.
+     * @param player - The player to check against.
+     * @return True if the player is in the deans reach zone.
+     */
+    public boolean canReach(Player player) {
+<span class="fc bfc" id="L146" title="All 4 branches covered.">        return player.isColliding(reachRectangle) &amp;&amp; player.isVisible();</span>
+    }
+
+    public boolean deanVicinityInvis(Player player) {
+<span class="nc bnc" id="L150" title="All 4 branches missed.">        return player.isColliding(reachRectangle) &amp;&amp; !player.isVisible();</span>
+    }
+
+    /**
+     * Make the dean go back to the start of its path (first instruction).
+     */
+    public void restartPath() {
+<span class="fc" id="L157">        moveNum = 0;</span>
+<span class="fc" id="L158">        nextTileDistance = 32;</span>
+<span class="fc" id="L159">    }</span>
+
+    /**
+     * @return The dean's reach rectangle.
+     */
+    public Rectangle getReachRectangle() {
+<span class="nc" id="L165">        return reachRectangle;</span>
+    }
+
+    //Added getters to make restart path testable
+    /**
+     * @return The current move number in the path.
+     */
+    public int getMoveNum() {
+<span class="fc" id="L173">        return moveNum;</span>
+    }
+
+    /**
+     * @return The distance remaining to the next tile.
+     */
+    public float getNextTileDistance() {
+<span class="fc" id="L180">        return nextTileDistance;</span>
+    }
+
+    /**
+     *  snaps the dean to the next tile dependent on the direction hes moving 
+     * ensures he follows same path after changing direction by stopping him any offsets/ positional desync
+     * @param direction deans current direction
+     */
+    private void syncPos(char direction) {
+<span class="nc" id="L189">        float sx = getX();</span>
+<span class="nc" id="L190">        float sy = getY();</span>
+
+<span class="nc bnc" id="L192" title="All 5 branches missed.">        switch (direction) {</span>
+            case 'U':
+<span class="nc" id="L194">                sy = (float) (Math.ceil(getY() / 32f) * 32f);</span>
+<span class="nc" id="L195">                break;</span>
+
+            case 'D':
+<span class="nc" id="L198">                sy = (float) (Math.floor(getY() / 32f) * 32f);</span>
+<span class="nc" id="L199">                break;</span>
+
+            case 'R':
+<span class="nc" id="L202">                sx = (float) (Math.ceil(getX() / 32f) * 32f);</span>
+<span class="nc" id="L203">                break;</span>
+
+            case 'L':
+<span class="nc" id="L206">                sx = (float) (Math.floor(getX() / 32f) * 32f);</span>
+                break;
+        }
+
+<span class="nc" id="L210">        setPosition(sx, sy);</span>
+<span class="nc" id="L211">        getHitbox().setPosition(sx, sy);</span>
+<span class="nc" id="L212">        nextTileDistance = 32f;</span>
+<span class="nc" id="L213">    }</span>
+
+
+    /**
+     * changes a given direction to the opposite one
+     * @param c the deans next direction
+     * @return
+     */
+    private char invertChar(char c) {
+<span class="nc bnc" id="L222" title="All 5 branches missed.">    switch (c) {</span>
+<span class="nc" id="L223">        case 'U': return 'D';</span>
+<span class="nc" id="L224">        case 'D': return 'U';</span>
+<span class="nc" id="L225">        case 'L': return 'R';</span>
+<span class="nc" id="L226">        case 'R': return 'L';</span>
+<span class="nc" id="L227">        default:  return c;</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

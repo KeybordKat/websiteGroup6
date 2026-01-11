@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TriggerSystem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">core</a> &gt; <a href="index.source.html" class="el_package">io.github.eng1group9.systems</a> &gt; <span class="el_source">TriggerSystem.java</span></div><h1>TriggerSystem.java</h1><pre class="source lang-java linenums">package io.github.eng1group9.systems;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import com.badlogic.gdx.maps.MapLayer;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.MapObjects;
+import com.badlogic.gdx.maps.objects.RectangleMapObject;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.math.Rectangle;
+
+import io.github.eng1group9.Main;
+import io.github.eng1group9.entities.Player;
+
+
+/**
+ * The system used to make things happen if a player enters a given area.
+ * The Triggers layer on the TileMap contains Rectangles used to denote these areas.
+ * The name of the Rectangle is in the form &quot;ID,triggerType&quot;
+ * which is used to determine what happens when it is triggered, and how.
+ *
+ * triggerType must be in the form T or I
+ * for Touch or Interact
+ */
+<span class="nc" id="L27">public class TriggerSystem {</span>
+
+    /**
+     * A Trigger with a zone and a player it relates too.
+     */
+    static class Trigger {
+        private int ID;
+        private Rectangle zone;
+<span class="fc" id="L35">        private boolean activateOnTouch = false;</span>
+
+<span class="fc" id="L37">        public Trigger(int ID, boolean activateOnTouch, Rectangle zone) {</span>
+<span class="fc" id="L38">            this.ID = ID;</span>
+<span class="fc" id="L39">            this.activateOnTouch = activateOnTouch;</span>
+<span class="fc" id="L40">            this.zone = zone;</span>
+<span class="fc" id="L41">        }</span>
+
+        public int getID() {
+<span class="fc" id="L44">            return ID;</span>
+        }
+
+        public boolean isActivateOnTouch() {
+<span class="fc" id="L48">            return activateOnTouch;</span>
+        }
+
+        public boolean isActivateOnInteract() {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">            return !activateOnTouch;</span>
+        }
+
+        public Rectangle getZone() {
+<span class="nc" id="L56">            return zone;</span>
+        }
+
+        public boolean playerInZone(Player player) {
+<span class="fc" id="L60">            return player.isColliding(zone);</span>
+        }
+    }
+
+<span class="fc" id="L64">    private static List&lt;Trigger&gt; touchTriggers = new LinkedList&lt;&gt;();</span>
+<span class="fc" id="L65">    private static List&lt;Trigger&gt; interactTriggers = new LinkedList&lt;&gt;();</span>
+
+    public static void init(String tmxPath) {
+<span class="nc" id="L68">        List&lt;Trigger&gt; triggers = getTriggers(tmxPath);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        for (Trigger t : triggers) {</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">            if (t.isActivateOnTouch()) {</span>
+<span class="nc" id="L71">                touchTriggers.add(t);</span>
+            }
+            else {
+<span class="nc" id="L74">                interactTriggers.add(t);</span>
+            }
+<span class="nc" id="L76">        }</span>
+<span class="nc" id="L77">    }</span>
+
+    /**
+     * Return a list of all triggers in a tileset.
+     * This should only be used when first loading the tileset.
+     * @param tmxPath - The path to the tileset (.tmx file).
+     * @return A list of all Triggers.
+     */
+    public static List&lt;Trigger&gt; getTriggers(String tmxPath) {
+<span class="nc" id="L86">        TiledMap map = new TmxMapLoader().load(tmxPath);</span>
+<span class="nc" id="L87">        MapLayer triggerLayer = map.getLayers().get(&quot;Triggers&quot;);</span>
+<span class="nc" id="L88">        MapObjects triggerObjects = triggerLayer.getObjects();</span>
+<span class="nc" id="L89">        List&lt;Trigger&gt; triggers = new LinkedList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        for (MapObject mapObject : triggerObjects) {</span>
+<span class="nc" id="L92">            RectangleMapObject recMapObj = (RectangleMapObject) mapObject;  //add assert?</span>
+<span class="nc" id="L93">            int ID = Integer.parseInt(recMapObj.getName().split(&quot;,&quot;)[0]);</span>
+
+<span class="nc" id="L95">            Rectangle zone = recMapObj.getRectangle();</span>
+<span class="nc" id="L96">            zone.set(zone.x * 2, zone.y * 2, zone.width * 2, zone.height * 2);</span>
+
+<span class="nc" id="L98">            String triggerType = recMapObj.getName().split(&quot;,&quot;)[1];</span>
+<span class="nc" id="L99">            Trigger t = new Trigger(ID, triggerType.equals(&quot;T&quot;), zone);</span>
+<span class="nc" id="L100">            triggers.add(t);</span>
+<span class="nc" id="L101">            System.out.println(&quot;Loaded Trigger &quot; + t.getID());</span>
+<span class="nc" id="L102">        }</span>
+<span class="nc" id="L103">        return triggers;</span>
+    }
+
+    /**
+     * @return A list of all touch triggers in the system (Name = ID,T).
+     */
+    public static List&lt;Trigger&gt; getTouchTriggers() {
+<span class="fc" id="L110">        return touchTriggers;</span>
+    }
+
+    /**
+     * @return A list of all touch triggers in the system (Name = ID,I).
+     */
+    public static List&lt;Trigger&gt; getInteractTriggers() {
+<span class="fc" id="L117">        return interactTriggers;</span>
+    }
+
+    /**
+     * Remove a trigger from the system.
+     * @param ID - The ID of the trigger which should be removed.
+     * @return True if it was successful.
+     */
+    public static boolean remove(int ID) {
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        for (Trigger t : touchTriggers) {</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">            if (t.getID() == ID) {</span>
+<span class="fc" id="L128">                touchTriggers.remove(t);</span>
+<span class="fc" id="L129">                return true;</span>
+            }
+<span class="nc" id="L131">        }</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        for (Trigger t : interactTriggers) {</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">            if (t.getID() == ID) {</span>
+<span class="nc" id="L134">                interactTriggers.remove(t);</span>
+<span class="nc" id="L135">                return true;</span>
+            }
+<span class="nc" id="L137">        }</span>
+<span class="nc" id="L138">        return false;</span>
+    }
+
+    /**
+     * @return A list of all triggers in the system (both types).
+     */
+    public static List&lt;Trigger&gt; getTriggers() {
+<span class="nc" id="L145">        List&lt;Trigger&gt; triggers = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L146">        triggers.addAll(touchTriggers);</span>
+<span class="nc" id="L147">        triggers.addAll(interactTriggers);</span>
+<span class="nc" id="L148">        return triggers;</span>
+    }
+
+    /**
+     * Will check if the given player is staninding in any triggers, and trigger them if so.
+     * @param player The player which is being checked.
+     * This is run each time the player presses E.
+     */
+    public static void checkInteractTriggers(Player player) {
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        for (Trigger t : interactTriggers) {</span>
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">            if (t.playerInZone(player)) {</span>
+<span class="fc" id="L159">                System.out.println(&quot;Triggered &quot; + t.getID() + &quot;!&quot;);</span>
+<span class="fc" id="L160">                trigger(t.getID(), player);</span>
+            }
+<span class="fc" id="L162">        }</span>
+<span class="fc" id="L163">    }</span>
+
+    /**
+     * Will check if the given player is staninding in any triggers, and trigger them if so.
+     * @param player The player which is being checked.
+     * This is run each frame.
+     */
+    public static void checkTouchTriggers(Player player) {
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        for (Trigger t : touchTriggers) {</span>
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">            if (t.playerInZone(player)) {</span>
+<span class="fc" id="L173">                trigger(t.getID(), player);</span>
+            }
+<span class="fc" id="L175">        }</span>
+<span class="fc" id="L176">    }</span>
+
+    /**
+     * Will act based on which trigger has been activated
+     * @param ID the trigger that has been activated
+     */
+    public static void trigger(int ID, Player player) {
+<span class="pc bpc" id="L183" title="11 of 15 branches missed.">        switch (ID) {</span>
+            case 0: // open the main door
+<span class="nc" id="L185">                Main.winGame();</span>
+<span class="nc" id="L186">                LeaderboardSystem.updateLeaderboard(player.getName(), Main.calculateScore());</span>
+<span class="nc" id="L187">                break;</span>
+            case 1: // Get the chest room key
+<span class="fc" id="L189">                player.giveChestRoomKey();</span>
+<span class="fc" id="L190">                break;</span>
+            case 2: // Get the scroll
+<span class="nc" id="L192">                Main.getScroll();</span>
+<span class="nc" id="L193">                break;</span>
+            case 3: // Standing by the switch
+<span class="nc" id="L195">                Main.dropSpikes();</span>
+<span class="nc" id="L196">                break;</span>
+            case 4: // Standing by the mouse hole
+<span class="nc" id="L198">                Main.checkForLongboi();</span>
+<span class="nc" id="L199">                break;</span>
+            case 5: // Standing by the chest
+<span class="nc" id="L201">                player.giveExitKey();</span>
+<span class="nc" id="L202">                break;</span>
+            case 6: // Standing by the chest room door
+<span class="nc" id="L204">                Main.openChestRoomDoor();</span>
+<span class="nc" id="L205">                break;</span>
+            case 7: // Standing by the chest room door
+<span class="nc" id="L207">                Main.openExit();</span>
+<span class="nc" id="L208">                break;</span>
+            case 8: // Pickup red potion.
+<span class="nc" id="L210">                player.giveRedPotion();</span>
+<span class="nc" id="L211">                break;</span>
+            case 9: // standing by the skull
+<span class="nc" id="L213">                Main.deanLevelUp();</span>
+<span class="nc" id="L214">                break;</span>
+            case 10: // standing by the hallway bookshelf
+<span class="nc" id="L216">                Main.getBook();</span>
+<span class="nc" id="L217">                break;</span>
+            case 11: // standing by the evil duck iobgnol
+<span class="nc" id="L219">                Main.secondDuckDialogue();</span>
+<span class="nc" id="L220">                break;</span>
+            case 12: // stood by chair
+<span class="fc" id="L222">                Main.changeLayerAtChair(); </span>
+<span class="fc" id="L223">                break;</span>
+            case 13: // stood by chest
+<span class="fc" id="L225">                Main.goDownLayer();</span>
+<span class="fc" id="L226">                break;</span>
+            default:
+                break;
+        }
+<span class="fc" id="L230">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

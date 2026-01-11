@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LeaderboardSystem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">core</a> &gt; <a href="index.source.html" class="el_package">io.github.eng1group9.systems</a> &gt; <span class="el_source">LeaderboardSystem.java</span></div><h1>LeaderboardSystem.java</h1><pre class="source lang-java linenums">package io.github.eng1group9.systems;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * handles everything related to the leaderboard and storing scores
+ */
+<span class="nc" id="L13">public class LeaderboardSystem {</span>
+    
+    /**
+     * handles writing to the leaderboard
+     * creates file if needed then offloads the formatting to another method and overwrites the file with that data
+     * @param name
+     * @param score
+     */
+    public static void updateLeaderboard(String name, int score) {
+        try {
+<span class="nc" id="L23">            String userHome = System.getProperty(&quot;user.home&quot;);</span>
+<span class="nc" id="L24">            String dirName = userHome + File.separator + &quot;maze-game-team-6&quot;;</span>
+<span class="nc" id="L25">            File dir = new File(dirName);</span>
+<span class="nc bnc" id="L26" title="All 2 branches missed.">            if (!dir.exists()) {</span>
+<span class="nc" id="L27">                dir.mkdirs();</span>
+            }
+
+<span class="nc" id="L30">            File leaderboardFile = new File(dir, &quot;Leaderboard.txt&quot;);</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">            if (!leaderboardFile.exists()) {</span>
+<span class="nc" id="L32">                leaderboardFile.createNewFile();</span>
+            }
+
+<span class="nc" id="L35">            List&lt;String&gt; leaderboard = formatLeaderboard(name, score, leaderboardFile);</span>
+
+<span class="nc" id="L37">            FileWriter writer = new FileWriter(leaderboardFile, false);</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">            for (int i = 0; i &lt; Math.min(5, leaderboard.size()); i++) {</span>
+<span class="nc" id="L39">                writer.write(leaderboard.get(i) + &quot;\n&quot;);</span>
+            }
+<span class="nc" id="L41">            writer.close();</span>
+        }
+<span class="nc" id="L43">        catch (IOException e) {</span>
+<span class="nc" id="L44">            e.printStackTrace();</span>
+<span class="nc" id="L45">        }</span>
+<span class="nc" id="L46">    }</span>
+
+    /**
+     * processes the score data from the leaderboard and the game just played
+     * compares new score to other members of the leaderboard and inserts new player if applicable
+     * @param name player name
+     * @param score player score
+     * @param file the leaderboard file
+     * @return the leaderboard list containing the 5 highest scoring players
+     * @throws IOException
+     */
+    public static List&lt;String&gt; formatLeaderboard(String name, int score, File file) throws IOException {
+<span class="fc" id="L58">        List&lt;String&gt; currentLeaders = Files.readAllLines(file.toPath());</span>
+<span class="fc" id="L59">        String newEntry = name + &quot; - &quot; + score;</span>
+<span class="fc" id="L60">        boolean inserted = false;</span>
+
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (int i = 0; i &lt; currentLeaders.size(); i++) {</span>
+<span class="fc" id="L63">            String line = currentLeaders.get(i).trim();</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">            if (line.isEmpty()) continue;</span>
+
+<span class="fc" id="L66">            String[] parts = line.split(&quot; - &quot;, 2);</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">            if (parts.length &lt; 2) continue;</span>
+
+<span class="fc" id="L69">            int existingScore = Integer.parseInt(parts[1].trim());</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (score &gt; existingScore) {</span>
+<span class="fc" id="L71">                currentLeaders.add(i, newEntry);</span>
+<span class="fc" id="L72">                inserted = true;</span>
+<span class="fc" id="L73">                break;</span>
+            }
+        }
+
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (!inserted) {</span>
+<span class="fc" id="L78">            currentLeaders.add(newEntry);</span>
+        }
+<span class="fc" id="L80">        return currentLeaders;</span>
+    }
+
+    public static List&lt;String&gt; getLeaderboardContents() {
+        try {
+<span class="nc" id="L85">            File file = getLeaderboardFile();</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            if (!file.exists()) {</span>
+<span class="nc" id="L87">                return new ArrayList&lt;String&gt;();</span>
+            }
+<span class="nc" id="L89">            return Files.readAllLines(file.toPath());</span>
+        }
+<span class="nc" id="L91">        catch (IOException e){</span>
+<span class="nc" id="L92">            List&lt;String&gt; errorList = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            for (int i = 0; i &lt; 5; i++) {</span>
+<span class="nc" id="L94">                errorList.add(e.toString());</span>
+            }
+<span class="nc" id="L96">            return errorList;</span>
+        }
+    }
+
+    public static File getLeaderboardFile() {
+<span class="nc" id="L101">        File leaderboardFile = new File(System.getProperty(&quot;user.home&quot;) + File.separator + &quot;maze-game-team-6&quot;, &quot;Leaderboard.txt&quot;);</span>
+<span class="nc" id="L102">        return leaderboardFile;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

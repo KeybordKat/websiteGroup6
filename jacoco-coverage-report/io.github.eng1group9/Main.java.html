@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Main.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">core</a> &gt; <a href="index.source.html" class="el_package">io.github.eng1group9</a> &gt; <span class="el_source">Main.java</span></div><h1>Main.java</h1><pre class="source lang-java linenums">package io.github.eng1group9;
+
+import java.util.List;
+
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.ScreenUtils;
+
+import io.github.eng1group9.entities.Dean;
+import io.github.eng1group9.entities.Player;
+import io.github.eng1group9.systems.CollisionSystem;
+import io.github.eng1group9.systems.InputSystem;
+import io.github.eng1group9.systems.RenderingSystem;
+import io.github.eng1group9.systems.TimerSystem;
+import io.github.eng1group9.systems.ToastSystem;
+import io.github.eng1group9.systems.TriggerSystem;
+
+/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+<span class="fc" id="L22">public class Main extends ApplicationAdapter {</span>
+
+<span class="fc" id="L24">    boolean isFullscreen = false;</span>
+<span class="fc" id="L25">    static int gameState = 0;</span>
+    /// 0 = Not started
+    /// 1 = Playing
+    /// 2 = Paused
+    /// 3 = Win
+    /// 4 = Lose
+
+<span class="fc" id="L32">    public static boolean chestDoorOpen = false; // Wether the door to the chest room has been opened.</span>
+<span class="fc" id="L33">    public static boolean exitOpen = false; // Wether the exit is open/</span>
+<span class="fc" id="L34">    public static boolean spikesLowered = false; // Wether the spikes in the chest room have been lowered.</span>
+<span class="fc" id="L35">    public static boolean scrollUsed = false; // Wether the scroll power up has been collected.</span>
+<span class="fc" id="L36">    public static boolean bookUsed = false; //New - Whether the book has been collected</span>
+<span class="fc" id="L37">    public static int longboiBonus = 0; // the bonus to add based on wether LongBoi was found.</span>
+<span class="fc" id="L38">    public static int hiddenEventCounter = 0;</span>
+<span class="fc" id="L39">    public static int negativeEventCounter = 0;</span>
+<span class="fc" id="L40">    public static int positiveEventCounter = 0;</span>
+
+<span class="fc" id="L42">    private static TimerSystem timerSystem = new TimerSystem();</span>
+<span class="fc" id="L43">    private static ToastSystem toastSystem = new ToastSystem();</span>
+
+<span class="fc" id="L45">    public boolean showCollision = false;</span>
+
+    private List&lt;Rectangle&gt; worldCollision;
+    final static int LONGBOIBONUSAMOUNT = 201823;
+    final static String TMXPATH = &quot;World/testMap.tmx&quot;;
+
+    public static Player player;
+<span class="fc" id="L52">    private static boolean playerCaught = false; // Wether the player is currently being held by the Dean.</span>
+<span class="fc" id="L53">    final float INITALPLAYERCAUGHTTIME = 1.2f;</span>
+<span class="fc" id="L54">    private float playerCaughtTime = INITALPLAYERCAUGHTTIME; // how many seconds the Dean will hold the player when caught.</span>
+<span class="fc" id="L55">    final Vector2 PLAYERSTARTPOS = new Vector2(16, 532); // Where the player begins the game, and returns to when caught.</span>
+<span class="fc" id="L56">    final float DEFAULTPLAYERSPEED = 100; // The players speed.</span>
+
+    protected static Dean dean;
+<span class="fc" id="L59">    final Vector2 DEANSTARTPOS = new Vector2(32, 352); // Where the Dean begins the game, and returns to after catching the player.</span>
+<span class="fc" id="L60">    final float DEFAULTDEANSPEED = 100;</span>
+<span class="fc" id="L61">    final int DEANPUNISHMENT = 30; // The number of seconds the Dean adds to the timer.</span>
+<span class="fc" id="L62">    final Character[] DEANPATH = { // The path the dean will take (D = Down, U = Up, L = Left, R = Right). The path will loop.</span>
+<span class="fc" id="L63">        'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R',</span>
+<span class="fc" id="L64">        'D', 'D', 'D', 'D', 'D', 'D', 'D', 'D',</span>
+<span class="fc" id="L65">        'R', 'R', 'R',</span>
+<span class="fc" id="L66">        'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U', 'U',</span>
+<span class="fc" id="L67">        'L', 'L', 'L',</span>
+<span class="fc" id="L68">        'D', 'D', 'D', 'D',</span>
+<span class="fc" id="L69">        'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L', 'L'</span>
+    };
+
+<span class="fc" id="L72">    final static Color BAD = new Color(1,1,0,1);</span>
+<span class="fc" id="L73">    final static Color GOOD = new Color(0,1,1,1);</span>
+
+    public static Main instance;
+<span class="fc" id="L76">    public static RenderingSystem renderingSystem = new RenderingSystem();</span>
+<span class="fc" id="L77">    public static CollisionSystem collisionSystem = new CollisionSystem();</span>
+<span class="fc" id="L78">    public static InputSystem inputSystem = new InputSystem(renderingSystem);</span>
+
+<span class="fc" id="L80">    public List&lt;String&gt; achievementList = List.of(&quot;press f&quot;);</span>
+<span class="fc" id="L81">    public boolean firstTimeCaught = false;</span>
+<span class="fc" id="L82">    public boolean achivementTrigger = false;</span>
+<span class="fc" id="L83">    public static boolean deanPhase2 = false;</span>
+<span class="fc" id="L84">    public static boolean groundFloor = true;</span>
+
+    @Override
+    public void create() {
+<span class="nc" id="L88">        renderingSystem.initWorld(TMXPATH, 480, 320, timerSystem);</span>
+<span class="nc" id="L89">        collisionSystem.init(renderingSystem.getMapRenderer().getMap(), &quot;Collision&quot;);</span>
+<span class="nc" id="L90">        TriggerSystem.init(TMXPATH);</span>
+<span class="nc" id="L91">        worldCollision = collisionSystem.getWorldCollision();</span>
+<span class="nc" id="L92">        player = new Player(PLAYERSTARTPOS, DEFAULTPLAYERSPEED);</span>
+<span class="nc" id="L93">        player.setToastSystemPlayer(toastSystem);</span>
+<span class="nc" id="L94">        dean = new Dean(DEANSTARTPOS, DEFAULTDEANSPEED, DEANPATH);</span>
+<span class="nc" id="L95">        Gdx.input.setInputProcessor(inputSystem);</span>
+<span class="nc" id="L96">        togglePause();</span>
+<span class="nc" id="L97">        instance = this;</span>
+<span class="nc" id="L98">        renderingSystem.setToastSystem(toastSystem);</span>
+<span class="nc" id="L99">    }</span>
+
+    @Override
+    public void render() {
+<span class="nc" id="L103">        ScreenUtils.clear(Color.BLACK);</span>
+<span class="nc" id="L104">        inputSystem.handle(player);</span>
+
+<span class="nc" id="L106">        renderingSystem.draw(player, dean, showCollision, timerSystem.elapsedTime, worldCollision);</span>
+<span class="nc" id="L107">        draw();</span>
+
+        // game wont start without valid text input
+<span class="nc bnc" id="L110" title="All 6 branches missed.">        if (!inputSystem.isTakingName() &amp;&amp; (player.getName() == null || player.getName().isEmpty())) {</span>
+<span class="nc" id="L111">            player.setName(inputSystem.getInput().trim());</span>
+        }
+<span class="nc bnc" id="L113" title="All 4 branches missed.">        if (player.getName() == null || player.getName().trim().length() &lt; 1) {</span>
+<span class="nc" id="L114">            renderingSystem.renderInputBox(inputSystem, player);</span>
+        }
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (gameState == 1) {logic();} // gameplay loop</span>
+
+<span class="nc bnc" id="L119" title="All 4 branches missed.">        if (deanPhase2 &amp;&amp; ((int )(Math.random() * 1400 + 1) == 7)) { // chance each frame for the dean to change direction</span>
+<span class="nc" id="L120">            dean.changeDirection();</span>
+        }
+<span class="nc" id="L122">    }</span>
+
+    /**
+     * Check if the player has the red potion.
+     * If they do, show Long Boi and complete the hidden event.
+     * If not, tell the player they must find the potion.
+     */
+    public static void checkForLongboi() {
+<span class="fc" id="L130">        Color messageColour = new Color(0.2f, 1, 0.2f ,1);</span>
+<span class="fc bfc" id="L131" title="All 4 branches covered.">        if (longboiBonus == 0 &amp;&amp; !player.hasRedPotion()) {</span>
+<span class="fc" id="L132">            toastSystem.addToast(&quot;Hello There! I seem to have misplaced my Red Potion, could you get it for me?&quot;, messageColour, 270, 325, 630);</span>
+         }
+<span class="pc bpc" id="L134" title="1 of 4 branches missed.">        else if (longboiBonus == 0 &amp;&amp; player.hasRedPotion()){</span>
+<span class="fc" id="L135">            longboiBonus = LONGBOIBONUSAMOUNT;</span>
+<span class="fc" id="L136">            toastSystem.addToast(&quot;You found my potion! Thank you!&quot;, messageColour, 270, 300, 630);</span>
+<span class="fc" id="L137">            RenderingSystem.showLayer(&quot;LONGBOI&quot;);</span>
+<span class="fc" id="L138">            toastSystem.addToast(&quot;Achievement unlocked: No cheese wheels?&quot;, true);</span>
+<span class="fc" id="L139">            hiddenEventCounter++;</span>
+<span class="fc" id="L140">            instance.openHiddenPassage();</span>
+        }
+<span class="fc" id="L142">    }</span>
+
+    public void draw() {
+<span class="nc" id="L145">        renderingSystem.draw(player, dean, showCollision, timerSystem.elapsedTime, worldCollision);</span>
+<span class="nc bnc" id="L146" title="All 5 branches missed.">        switch (gameState) {</span>
+            case 0:
+<span class="nc" id="L148">                renderingSystem.renderStartOverlay(960, 640);</span>
+<span class="nc" id="L149">                break;</span>
+            case 2:
+<span class="nc" id="L151">                renderingSystem.renderPauseOverlay(960, 640, positiveEventCounter, negativeEventCounter, hiddenEventCounter);</span>
+<span class="nc" id="L152">                break;</span>
+            case 3:
+<span class="nc" id="L154">                renderingSystem.renderWinOverlay(960, 640, timerSystem.getTimeLeft(), calculateScore(), positiveEventCounter, negativeEventCounter, hiddenEventCounter);</span>
+<span class="nc" id="L155">                break;</span>
+            case 4:
+<span class="nc" id="L157">                renderingSystem.renderLoseOverlay(960, 640, positiveEventCounter, negativeEventCounter, hiddenEventCounter);</span>
+<span class="nc" id="L158">                break;</span>
+            default:
+                break;
+        }
+<span class="nc" id="L162">    }</span>
+
+    /**
+     * Open the door of the room with the chest.
+     * Remove its hitbox and graphic.
+     */
+    public static void openChestRoomDoor() {
+<span class="fc bfc" id="L169" title="All 4 branches covered.">        if (player.hasChestRoomKey() &amp;&amp; !chestDoorOpen) {</span>
+<span class="fc" id="L170">            toastSystem.addToast(&quot;You Opened the Door!&quot;, GOOD);</span>
+<span class="fc" id="L171">            collisionSystem.removeCollisionByName(&quot;chestRoomDoor&quot;);</span>
+<span class="fc" id="L172">            RenderingSystem.hideLayer(&quot;ChestDoorClosed&quot;);</span>
+<span class="fc" id="L173">            toastSystem.addToast(&quot;Achievement unlocked: Treasure trove&quot;, true);</span>
+<span class="fc" id="L174">            chestDoorOpen = true;</span>
+<span class="fc" id="L175">            positiveEventCounter++;</span>
+        }
+<span class="fc" id="L177">    }</span>
+
+    /**
+     * Open the exit.
+     * Remove its hitbox and hide its graphic.
+     */
+    public static void openExit() {
+<span class="fc bfc" id="L184" title="All 4 branches covered.">        if (player.hasExitKey() &amp;&amp; !exitOpen) {</span>
+<span class="fc" id="L185">            toastSystem.addToast(&quot;You Opened the Exit!&quot;, GOOD);</span>
+<span class="fc" id="L186">            collisionSystem.removeCollisionByName(&quot;exitDoor&quot;);</span>
+<span class="fc" id="L187">            RenderingSystem.hideLayer(&quot;ExitClosed&quot;);</span>
+<span class="fc" id="L188">            toastSystem.addToast(&quot;Achievement unlocked: To infinity and beyond&quot;, true);</span>
+<span class="fc" id="L189">            exitOpen = true;</span>
+<span class="fc" id="L190">            positiveEventCounter++;</span>
+        }
+<span class="fc" id="L192">    }</span>
+
+    /**
+     * Give the scroll powerup to the player, making the player invisible for 15s.
+     * Hide the scroll graphic.
+     */
+    public static void getScroll() {
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        if (!scrollUsed) {</span>
+<span class="fc" id="L200">            player.becomeInvisible();</span>
+<span class="fc" id="L201">            RenderingSystem.hideLayer(&quot;Scroll&quot;);</span>
+<span class="fc" id="L202">            scrollUsed = true;</span>
+<span class="fc" id="L203">            toastSystem.addToast(&quot;You got the Scroll!&quot;, GOOD);</span>
+<span class="fc" id="L204">            toastSystem.addToast(&quot;You are invisible for 15s&quot;, GOOD);</span>
+<span class="fc" id="L205">            toastSystem.addToast(&quot;Achievement unlocked: Librarian&quot;, true);</span>
+<span class="fc" id="L206">            positiveEventCounter++;</span>
+        }
+<span class="fc" id="L208">    }</span>
+
+    /**
+     * New -
+     * Give the magic book to the player, making the player slow for 15s.
+     * Hide the book graphic.
+     */
+    public static void getBook() {
+<span class="nc" id="L216">        System.out.println(&quot;getbook ran&quot;);</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">        if (!bookUsed) {</span>
+<span class="nc" id="L218">            player.becomeSlow();</span>
+<span class="nc" id="L219">            bookUsed = true;</span>
+<span class="nc" id="L220">            toastSystem.addToast(&quot;You got the Magic Book!&quot;, BAD);</span>
+<span class="nc" id="L221">            toastSystem.addToast(&quot;Achievement unlocked: Book Worm&quot;, true);</span>
+<span class="nc" id="L222">            negativeEventCounter++;</span>
+        }
+<span class="nc" id="L224">    }</span>
+
+    /**
+     * allows dean to change directions 
+     * logs relevant achievements
+     */
+    public static void deanLevelUp() {
+<span class="fc" id="L231">            toastSystem.addToast(&quot;The Dean has entered phase 2!&quot;, BAD);</span>
+<span class="fc" id="L232">            toastSystem.addToast(&quot;Achievement unlocked: ...no cutscene?&quot;, true);</span>
+<span class="fc" id="L233">            dean.changeDirection();</span>
+<span class="fc" id="L234">            deanPhase2 = true;</span>
+<span class="fc" id="L235">            negativeEventCounter++;</span>
+<span class="fc" id="L236">    }</span>
+
+    /**
+     * Set the game to the started state, and unpause it.
+     * Used once to start the game.
+     */
+    public static void startGame() {
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        if (gameState == 0) {</span>
+<span class="fc" id="L244">            gameState = 2;</span>
+<span class="fc" id="L245">            togglePause();</span>
+        }
+<span class="fc" id="L247">    }</span>
+
+    /**
+     * Set the game to the win state, used when the player escapes.
+     */
+    public static void winGame() {
+<span class="fc" id="L253">        togglePause();</span>
+<span class="fc" id="L254">        gameState = 3;</span>
+<span class="fc" id="L255">    }</span>
+
+    /**
+     * Set the game to the lose state, used when the player runs out of time.
+     */
+    public static void LoseGame() {
+<span class="fc" id="L261">        togglePause();</span>
+<span class="fc" id="L262">        gameState = 4;</span>
+<span class="fc" id="L263">    }</span>
+
+    /**
+     * Calculate the player's score based on how much time was left and whether they found Long Boi.
+     * @return The score.
+     */
+    public static int calculateScore() {
+<span class="fc" id="L270">        return timerSystem.getTimeLeft() * 1000 + longboiBonus;</span>
+    }
+
+    /**
+     * Toggle whether the window should be in Windowed or Fullscreen mode.
+     */
+    public void toggleFullscreen() {
+<span class="nc bnc" id="L277" title="All 2 branches missed.">        if (isFullscreen) {</span>
+<span class="nc" id="L278">                Gdx.graphics.setWindowedMode(960, 640);</span>
+            }
+            else {
+<span class="nc" id="L281">                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());</span>
+            }
+<span class="nc bnc" id="L283" title="All 2 branches missed.">            isFullscreen = !isFullscreen;</span>
+<span class="nc" id="L284">    }</span>
+
+    /**
+     * Toggle wether the game shoudl be paused.
+     * This will freeze the player/dean, stop all game logic and display the pause overlay.
+     */
+    public static void togglePause() {
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        if (gameState == 2) {</span>
+<span class="pc bpc" id="L292" title="1 of 2 branches missed.">            if (!playerCaught) {</span>
+<span class="fc" id="L293">                player.unfreeze();</span>
+<span class="fc" id="L294">                dean.unfreeze();</span>
+            }
+<span class="fc" id="L296">            gameState = 1;</span>
+        }
+        else {
+<span class="fc" id="L299">            player.freeze();</span>
+<span class="fc" id="L300">            dean.freeze();</span>
+<span class="pc bpc" id="L301" title="1 of 2 branches missed.">            if (gameState == 1) gameState = 2;</span>
+        }
+<span class="fc" id="L303">    }</span>
+
+    /**
+     * Where the game process its logic each frame.
+     * It will not run if the game is paused.
+     */
+    public void logic() {
+<span class="nc" id="L310">        float deltaTime = Gdx.graphics.getDeltaTime();</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">        if (!timerSystem.timeCheck(deltaTime))</span>
+        {
+<span class="nc" id="L313">            LoseGame();</span>
+        }
+<span class="nc" id="L315">        dean.nextMove();</span>
+<span class="nc" id="L316">        checkDeanCatch();</span>
+<span class="nc" id="L317">        TriggerSystem.checkTouchTriggers(player);</span>
+<span class="nc" id="L318">        player.update(deltaTime);</span>
+<span class="nc" id="L319">    }</span>
+
+    /**
+     * Checks if the dean has caught the player, and punishes them if he has by removing 50s from time left.
+     */
+    public void checkDeanCatch() {
+<span class="nc bnc" id="L325" title="All 4 branches missed.">        if (dean.canReach(player) &amp;&amp; !playerCaught) {</span>
+<span class="nc" id="L326">            startPlayerCatch();</span>
+        }
+<span class="nc bnc" id="L328" title="All 4 branches missed.">        else if (dean.deanVicinityInvis(player) &amp;&amp; !achivementTrigger){</span>
+<span class="nc" id="L329">            achivementTrigger = true;</span>
+<span class="nc" id="L330">            toastSystem.addToast(&quot;Achievement unlocked: Must've been the wind&quot;, true);</span>
+<span class="nc" id="L331">            hiddenEventCounter++;</span>
+        }
+<span class="nc bnc" id="L333" title="All 2 branches missed.">        else if (playerCaught) {</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">            if (playerCaughtTime &lt;= 0) {</span>
+<span class="nc" id="L335">                endPlayerCatch();</span>
+<span class="nc" id="L336">                playerCaughtTime = INITALPLAYERCAUGHTTIME;</span>
+            }
+            else {
+<span class="nc" id="L339">                float delta = Gdx.graphics.getDeltaTime();</span>
+<span class="nc" id="L340">                playerCaughtTime -= delta;</span>
+            }
+        }
+<span class="nc" id="L343">    }</span>
+
+    /**
+     * Run when the player is first caught by the game.
+     * This will begin the sequence where the player is held in detention while the timer goes down.
+     * This will freeze the player and dean.
+     */
+    private void startPlayerCatch() {
+<span class="nc" id="L351">        playerCaught = true;</span>
+<span class="nc" id="L352">        player.freeze();</span>
+<span class="nc" id="L353">        player.setPosition(PLAYERSTARTPOS);</span>
+<span class="nc" id="L354">        dean.freeze();</span>
+<span class="nc" id="L355">        dean.changeAnimation(3);</span>
+<span class="nc" id="L356">        dean.setPosition(PLAYERSTARTPOS.x + 32, PLAYERSTARTPOS.y);</span>
+<span class="nc" id="L357">        timerSystem.addGradually(DEANPUNISHMENT - INITALPLAYERCAUGHTTIME); // 48 not 50 because you spend 2s stood while the timer goes down.</span>
+<span class="nc" id="L358">        toastSystem.addToast(&quot;You were caught by the Dean!&quot;, BAD);</span>
+<span class="nc" id="L359">        toastSystem.addToast(&quot;You were stuck being lectured for 50s!&quot;, BAD);</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">        if (firstTimeCaught == false) {</span>
+<span class="nc" id="L361">            toastSystem.addToast(&quot;Achievement unlocked: Boss Fight&quot;, true);</span>
+        }
+<span class="nc" id="L363">        firstTimeCaught = true;</span>
+<span class="nc" id="L364">        negativeEventCounter++;</span>
+<span class="nc" id="L365">    }</span>
+
+    /**
+     * This will end the sequence where the player is held in detention while the timer goes down.
+     * This will unfreeze the player and dean.
+     * It will rest the dean to the start of its patrol.
+     */
+    private void endPlayerCatch() {
+<span class="nc" id="L373">        dean.setPosition(DEANSTARTPOS);</span>
+<span class="nc" id="L374">        dean.restartPath();</span>
+<span class="nc" id="L375">        dean.unfreeze();</span>
+<span class="nc" id="L376">        player.unfreeze();</span>
+<span class="nc" id="L377">        player.setSpeed(DEFAULTPLAYERSPEED);</span>
+<span class="nc" id="L378">        playerCaught = false;</span>
+<span class="nc" id="L379">    }</span>
+
+    /**
+     * Use to drop remove the spikes in the chest room when the switch is pressed.
+     */
+    public static void dropSpikes() {
+<span class="fc bfc" id="L385" title="All 2 branches covered.">        if (!spikesLowered) {</span>
+<span class="fc" id="L386">            collisionSystem.removeCollisionByName(&quot;chestRoomSpikes&quot;);</span>
+<span class="fc" id="L387">            toastSystem.addToast(&quot;You Lowered the Spikes!&quot;, GOOD);</span>
+<span class="fc" id="L388">            RenderingSystem.hideLayer(&quot;Spikes&quot;);</span>
+<span class="fc" id="L389">            RenderingSystem.hideLayer(&quot;Switch&quot;);</span>
+<span class="fc" id="L390">            toastSystem.addToast(&quot;Achievement unlocked: Smooth sailing&quot;, true);</span>
+<span class="fc" id="L391">            spikesLowered = true;</span>
+<span class="fc" id="L392">            positiveEventCounter++;</span>
+        }
+<span class="fc" id="L394">    }</span>
+
+    /**
+     * removes wall collision and enables the passage to be seen
+     */
+    public void openHiddenPassage() {
+<span class="fc" id="L400">        collisionSystem.removeCollisionByName(&quot;passageOpening&quot;);</span>
+<span class="fc" id="L401">        RenderingSystem.showLayer(&quot;passageOpening&quot;);</span>
+<span class="fc" id="L402">        RenderingSystem.showLayer(&quot;iobgnol&quot;);</span>
+<span class="fc" id="L403">        RenderingSystem.showLayer(&quot;roofDecal&quot;);</span>
+<span class="fc" id="L404">    }</span>
+
+    /**
+     * audio trigger for the evil duck with achievement trigger
+     */
+    public static void secondDuckDialogue() {
+<span class="fc" id="L410">        Color messageColour = new Color (0.8f, 0f, 0.8f, 1f);</span>
+<span class="fc" id="L411">        toastSystem.addToast(&quot;My name is Iobgnol and i am evil&quot;, messageColour, 270, 470, 200);</span>
+<span class="fc" id="L412">        toastSystem.addToast(&quot;Achievement unlocked: Retep&quot;, true);</span>
+<span class="fc" id="L413">        hiddenEventCounter++;</span>
+<span class="fc" id="L414">    }</span>
+
+    /**
+     * 'changes' the players elevation by turning on/ off relevant collision and assets, allowing them to climb and dismount the chair
+     */
+    public static void changeLayerAtChair() {
+<span class="pc bpc" id="L420" title="1 of 2 branches missed.">        if (groundFloor) {</span>
+<span class="fc" id="L421">            RenderingSystem.showLayer(&quot;attic1&quot;);</span>
+<span class="fc" id="L422">            RenderingSystem.showLayer(&quot;attic2&quot;);</span>
+<span class="fc" id="L423">            RenderingSystem.showLayer(&quot;attic3&quot;);</span>
+<span class="fc" id="L424">            RenderingSystem.showLayer(&quot;atticDecals&quot;);</span>
+<span class="fc" id="L425">            collisionSystem.init(renderingSystem.getMapRenderer().getMap(), &quot;atticCollision&quot;);</span>
+<span class="fc" id="L426">            staticWorldState();</span>
+<span class="fc" id="L427">            hiddenEventCounter++;</span>
+<span class="fc" id="L428">            toastSystem.addToast(&quot;You found an attic crawlspace!&quot;, GOOD);</span>
+<span class="fc" id="L429">            toastSystem.addToast(&quot;Achievement unlocked: Occupant Immorality 8: Town&quot; , true);</span>
+<span class="pc bpc" id="L430" title="1 of 2 branches missed.">            groundFloor = !groundFloor;</span>
+        }
+        else {
+<span class="nc" id="L433">            RenderingSystem.hideLayer(&quot;attic1&quot;);</span>
+<span class="nc" id="L434">            RenderingSystem.hideLayer(&quot;attic2&quot;);</span>
+<span class="nc" id="L435">            RenderingSystem.hideLayer(&quot;attic3&quot;);</span>
+<span class="nc" id="L436">            RenderingSystem.hideLayer(&quot;atticDecals&quot;);</span>
+<span class="nc" id="L437">            collisionSystem.init(renderingSystem.getMapRenderer().getMap(), &quot;Collision&quot;);</span>
+<span class="nc" id="L438">            staticWorldState();</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">            groundFloor = !groundFloor;</span>
+        }
+<span class="fc" id="L441">    }</span>
+
+
+    /**
+     * changes player elevartion similar to changeLayerAtChair, but uses a touchh trigger in chest room instead
+     */
+    public static void goDownLayer() {
+<span class="fc" id="L448">        RenderingSystem.hideLayer(&quot;attic1&quot;);</span>
+<span class="fc" id="L449">        RenderingSystem.hideLayer(&quot;attic2&quot;);</span>
+<span class="fc" id="L450">        RenderingSystem.hideLayer(&quot;attic3&quot;);</span>
+<span class="fc" id="L451">        RenderingSystem.hideLayer(&quot;atticDecals&quot;);</span>
+<span class="fc" id="L452">        collisionSystem.init(renderingSystem.getMapRenderer().getMap(), &quot;Collision&quot;);</span>
+<span class="fc" id="L453">        staticWorldState();</span>
+<span class="fc" id="L454">        positiveEventCounter++;</span>
+<span class="fc" id="L455">    }</span>
+
+    /**
+     * handles the logic for removing collision in chest room if you get there through attic (without key or lowering spikes)
+     */
+    public static void handleChestRoomCases() {
+<span class="fc" id="L461">        spikesLowered = true;</span>
+<span class="fc" id="L462">        chestDoorOpen = true;</span>
+<span class="fc" id="L463">        RenderingSystem.hideLayer(&quot;ChestDoorClosed&quot;);</span>
+<span class="fc" id="L464">        RenderingSystem.hideLayer(&quot;Spikes&quot;);</span>
+<span class="fc" id="L465">        RenderingSystem.hideLayer(&quot;Switch&quot;);</span>
+<span class="fc" id="L466">        staticWorldState();</span>
+<span class="fc" id="L467">    }</span>
+
+    private static void staticWorldState() {
+<span class="fc bfc" id="L470" title="All 2 branches covered.">        if (chestDoorOpen) {</span>
+<span class="fc" id="L471">            collisionSystem.removeCollisionByName(&quot;chestRoomDoor&quot;);</span>
+        }
+<span class="pc bpc" id="L473" title="1 of 2 branches missed.">        if (exitOpen) {</span>
+<span class="nc" id="L474">            collisionSystem.removeCollisionByName(&quot;exitDoor&quot;);</span>
+        }
+<span class="fc bfc" id="L476" title="All 2 branches covered.">        if (spikesLowered) {</span>
+<span class="fc" id="L477">            collisionSystem.removeCollisionByName(&quot;chestRoomSpikes&quot;);</span>
+        }
+<span class="fc" id="L479">    }</span>
+
+
+
+    @Override
+    public void resize(int width, int height) {
+<span class="nc" id="L485">        renderingSystem.resize(width, height);</span>
+<span class="nc" id="L486">    }</span>
+
+    @Override
+    public void pause() {
+<span class="nc" id="L490">        togglePause();</span>
+<span class="nc" id="L491">    }</span>
+
+    @Override
+    public void resume() {
+<span class="nc" id="L495">        togglePause();</span>
+<span class="nc" id="L496">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
